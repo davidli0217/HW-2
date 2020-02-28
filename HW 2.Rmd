@@ -1,0 +1,36 @@
+---
+title: "HW 2"
+output: github_document
+---
+
+**Load in and Prepare the Data**
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(blscrapeR)
+library(readr)
+library(data.table)
+df <- get_bls_county()
+WIunemployment = df %>% filter(fips_state == 55)
+
+bridges = read_csv("https://www.fhwa.dot.gov/bridge/nbi/2018/delimited/WI18.txt")
+br = bridges %>% group_by(COUNTY_CODE_003) %>% summarize(meanADT = mean(ADT_029)) %>% left_join(WIunemployment,by = c("COUNTY_CODE_003" = "fips_county"))
+
+```
+
+**Build up the linear models**
+
+```{r}
+model_unemployed = lm(WIunemployment$unemployed ~ br$meanADT)
+model_unemployed_rate = lm(WIunemployment$unemployed_rate ~ br$meanADT)
+summary(model_unemployed)
+summary(model_unemployed_rate)
+```
+
+**Draw linear model line**
+
+```{r}
+model_unemployed %>% ggplot(aes(br$meanADT, WIunemployment$unemployed)) + geom_point() + geom_smooth(method = "lm") + labs(x = "Average ADT", y = "Unemployed Number")
+model_unemployed_rate %>% ggplot(aes(br$meanADT, WIunemployment$unemployed_rate)) + geom_point() + geom_smooth(method = "lm") + labs(x = "Average ADT", y = "Unemployed Rate")
+```
